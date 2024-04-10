@@ -6,8 +6,10 @@
     <script src="https://cdn.jsdelivr.net/npm/wavefile"></script>
     <script src="https://cdn.jsdelivr.net/npm/wave-resampler"></script>
     <script src="FFT.js"></script>
-            <!-- flex 1 and 4 below divide the width into 20% / 80%  -->
-    <style>
+ <!--   <script src="filterCodes.js"></script>
+    <script src="plots.js"></script>
+ -->
+             <style>
         .psd_spec-container {
             display: flex;
         }
@@ -26,69 +28,75 @@
     <input type="number" id="amplitude" value="1"/>
     <div id="center" style="background-color: #ffffff; width:100%;">
         <label>Click period, T (microSec): </label>
-        <input id="T_click" style="width:5%;" value="30" type="text" onChange="replotClickFunction()"/>
+        <input id="T_click" style="width:5%;" value="300" type="text" onChange="runPipeline(0)"/>
     </div>
     <div id="center" style="background-color: #ffffff; width:100%;">
         <label>Damping time constant, tau (microSec): </label>
-        <input id="tau" style="width:5%;" value="80" type="text" onChange="replotClickFunction()"/>
+        <input id="tau" style="width:5%;" value="800" type="text" onChange="runPipeline(0)"/>
     </div>
     <div id="center" style="background-color: #ffffff; width:100%;">
         <label>Time (microSec): </label>
-        <input id="T_window" style="width:20%;" value="300" type="text" onChange="replotClickFunction()"/>
+        <input id="T_window" style="width:20%;" value="300" type="text" onChange="runPipeline(0)"/>
     </div>
     <div id="center" style="background-color: #ffffff; ">
         <label>Function x(t): </label>
         <input id="Click_func" style="width:60%;" value="(exp(-t/tau)**2)*cos(2*PI*t/T)*sin(2*PI*t/T)" type="text"
-               onChange="replotClickFunction()"/>
+               onChange="runPipeline(0)"/>
     </div>
     <div id="center" style="background-color: #ffffff; ">
         <label>Click separation (microSec): </label>
-        <input id="click_sep" style="width:5%;" value="1000" type="text" onChange="replotClickFunction()"/>
+        <input id="click_sep" style="width:5%;" value="2000" type="text" onChange="runPipeline(0)"/>
     </div>
+    <input id="sinAmpMod" type="checkbox" onchange="runPipeline(1)">
+    <label>Sin modulation over 2 sec call</label>
+
     <div id="center" style="background-color: #ffffff; width:100%;">
-        <select id="modulation" onchange="Plot_Spectogram()">
+        <select id="modulation" onchange="runPipeline(1)">
                 <option value="Nomod">No Call Modulation</option>
                 <option value="Upsweep">Call: upsweep</option>
                 <option value="Downsweep">Call: downsweep</option>
                 <option value="Excitement">Call: Excitement</option>
+
         </select>
         <label> Mod Start (Sec): </label>
-        <input id="modStart" style="width:2%;" value="0.5" type="text" onChange="replotClickFunction()"/>
+        <input id="modStart" style="width:2%;" value="0.5" type="text" onChange="runPipeline(1)"/>
         <label> Mod Parameter: </label>
-        <input id="modParm" style="width:2%;" value="1.5" type="text" onChange="replotClickFunction()"/>
+        <input id="modParm" style="width:2%;" value="1.5" type="text" onChange="runPipeline(1)"/>
     </div>
-
+    <div id="center" style="background-color: #ffffff; ">
+        <label id="label2">DEBUG</label>
+            <select id="DEBUG" onchange="runDEBUG()">
+`               <option value="none">None</option>
+                <option value="squareWav">Square Wave</option>
+                <option value="sawtoothWav">Sawtooth Wave</option>
+                <option value="orcaCall">Orca Call</option>`
+            </select>
+    </div>
     <div id="clickPlot"></div>
     <label id="label1"> Desired audio samplerate: </label>
-    <input id="Audio samplerate" style="width:3%;" value="48000" type="text" onchange="resampleFunction()">
-    <button id="replot click">Replot</button>
+    <input id="Audio samplerate" style="width:3%;" value="48000" type="text" onchange="runPipeline(2)">
 
-    <input id="low_pass" type="checkbox" onchange="resampleFunction()">
+    <input id="low_pass" type="checkbox" onchange="runPipeline(2)">
     <label>Low Pass Filter</label>
-    <input id="cutoff" style="width:3%;" value="24000" type="text" onchange="resampleFunction()">
-    <label>Plot t1 (microsec)</label>
-    <input id="t1" style="width:3%;" value="00" type="text" onchange="resampleFunction()">
-     <label>Plot t2 (microsec)</label>
-    <input id="t2" style="width:3%;" value="2000" type="text" onchange="resampleFunction()">
+    <input id="cutoff" style="width:3%;" value="24000" type="text" onchange="runPipeline(2)">
+    <label>Plot t1 (millisec)</label>
+    <input id="t1" style="width:3%;" value="00" type="text" onchange="runPipeline(3)">
+     <label>Plot t2 (millisec)</label>
+    <input id="t2" style="width:3%;" value="20" type="text" onchange="runPipeline(3)">
 
-    <button id="resample">Resample</button>
-<!--    <button id="plotResample">Plot Resampled Clicks</button>-->
-    <button id="playResample">Play 2 sec of Resampled Clicks</button>
+    <div>
+        <label>Message: </label>
+        <p id="msg"></p>
+    </div>
 
-    <div id="center" style="background-color: #ffffff; width:100%;">
-    <label id="label2">DEBUG</label>
-    <select id="DEBUG" onchange="runDEBUG()">
-            <option value="none">None</option>
-            <option value="squareWav">Sawtooth Wave</option>
-            <option value="orcaCall">Orca Call</option>
-    </select>
+    <div id="CallPlot"></div>
+    <div id="resampledCallPlot"></div>
 
-    <p id="msg"></p>
-    <div id="resampledClicksPlot"></div>
     <label id="label2"> Number of ms per PSD slice </label>
-    <input id="dt" style="width:5%;" value="50" type="text" onchange="Plot_Spectogram()">
+    <input id="dt" style="width:5%;" value="50" type="text" onchange="runPipeline(4)">
     <label id="label3"> Time (s) for PSD plot  </label>
-    <input id="t_PSD" style="width:5%;" value="0.5" type="text" onchange="Plot_Spectogram()">
+    <input id="t_PSD" style="width:5%;" value="0.5" type="text" onchange="runPipeline(4)">
+    <button id="playResample">Play 2 sec of Resampled Clicks</button>
     <div id="center" style="background-color: #00b5e2; width:100%;">
     <select id="FFTwindow" onchange="Plot_Spectogram()">
             <option value="None">FFT Window: None</option>
@@ -98,10 +106,10 @@
             <option value="Blackman">FFT Window: Blackman</option>
             </select>
     </div>
-    <input id="db_psd" type="checkbox" onchange="Plot_Spectogram()">
+    <input id="db_psd" type="checkbox" value="x" checked onchange="runPipeline(4)">
     <label>dB PSD   </label>
 
-    <input id="log_freq" type="checkbox" onchange="Plot_Spectogram()">
+    <input id="log_freq" type="checkbox" value="y" checked onchange="runPipeline(4)">
     <label>log Frequency</label>
 
     <div class="psd_spec-container">
@@ -112,11 +120,56 @@
     <script>
         ///////////   GLOBAL PARAMETER(s)
         // length of audio sample is 2 seconds
-        window.global_taudio = 2
-        window.global_resampled = false //document.getElementById("low_pass").checked
+        window.global_taudio = 2;
+        window.global_resampled = false; //document.getElementById("low_pass").checked
+        // set DEBUG default to 'none'
         document.getElementById("DEBUG").value = 'none';
-        // Function to replot the function with a new amplitude
-        function replotClickFunction() {
+
+        ////// Construct the full (maybe modulated) call time series at the high sample rate (1e6)  length = global_taudio
+        window.global_tCall = new Array(global_taudio * 1e6).fill(0);
+        window.global_yAmpCall = new Array(global_taudio * 1e6).fill(0);
+        var msg      = document.getElementById('msg');
+
+        runPipeline(0);
+
+
+
+        // Event listener for the Play Resampled Clicks button
+        document.getElementById('playResample').addEventListener('click', playResampledClicks);
+/////////////////////////////////////////////////////////////////////////
+        function runPipeline(iStart){
+            if (iStart === 0) {
+                msg.innerHTML = "Calculating clicks ...";
+                buildClicks();
+                plotClicks();
+                msg.innerHTML = "";
+            }
+            if (iStart <= 1){
+                msg.innerHTML = "Calculating call ...";
+                buildCall();
+            //    plotCall();
+                msg.innerHTML = "";
+            }
+            if (iStart <= 2){
+                msg.innerHTML = "Resampling call ...";
+                window.global_audioSamplerate = parseInt(document.getElementById('Audio samplerate').value);
+                resampleCall();
+                msg.innerHTML = "";
+            }
+            if (iStart <= 3){
+                msg.innerHTML = "Plotting call ...";
+                plotCall();
+                plotResampledCall();
+                msg.innerHTML = "";
+            }
+            if (iStart <= 4){
+                msg.innerHTML = "Plotting spectrogram ...";
+                plotSpectrogram();
+                msg.innerHTML = "";
+            }
+
+        }
+        function buildClicks() {
             var amplitude = parseFloat(document.getElementById('amplitude').value);
             const funcString = document.getElementById('Click_func').value;
             var T = parseFloat(document.getElementById('T_click').value);
@@ -126,10 +179,12 @@
             var customFunction = new Function('T', 'tau', 'exp', 'cos', 'sin', 'PI', 't', `return ${funcString}`);
             var tmus = new Array(T).fill(0);
             var yAmp = new Array(T).fill(0);
+            window.global_tmus = tmus
+            window.global_yAmp = yAmp
             with (Math) {
                 for (var n = 0; n < T_window; n += 1) {
                     tmus[n] = n
-                    yAmp[n] = amplitude * customFunction(T, tau, exp, cos, sin, PI, n);
+                    yAmp[n] = amplitude * customFunction(T*2, tau, exp, cos, sin, PI, n);
                 }
 //                console.log(yAmp)
             }
@@ -140,22 +195,101 @@
             with (Math) {
                 for (var n = 0; n < 2 * click_sep; n += 1) {
                     tmus2[n] = n;
-                    yAmp2[n] = amplitude * customFunction(T, tau, exp, cos, sin, PI, n)
+                    yAmp2[n] = amplitude * customFunction(T*2, tau, exp, cos, sin, PI, n)
                     if (n > click_sep) {
-                        yAmp2[n] = yAmp2[n] + amplitude * customFunction(T, tau, exp, cos, sin, PI, n - click_sep);
+                        yAmp2[n] = yAmp2[n] + amplitude * customFunction(T*2, tau, exp, cos, sin, PI, n - click_sep);
                     }
                 }
             }
+        }
+        function buildCall() {
+            ////////  Now build the Call
+            ////// Construct the full (maybe modulated) call time series at the high sample rate (1e6)  length = global_taudio
+            var callType = document.getElementById('modulation').value;
+            var doSinAmpMod = document.getElementById("sinAmpMod").checked;
+            window.global_tCall = new Array(global_taudio * 1e6).fill(0);      // the HF call has time in microseconds
+            window.global_yAmpCall = new Array(global_taudio * 1e6).fill(0);
+            var lenCall = 0.8*global_yAmpCall.length;
+            if (callType === 'Nomod'){
+                var idx = 0;
+                for (var n = 0; n < global_yAmpCall.length; n += 1) {
+                    global_tCall[n] = n / 1e6;   // time axis in seconds for full call
+                    global_yAmpCall[n] = global_yAmp2[idx];
+                    idx += 1;
+                    if (idx == global_yAmp2.length) {
+                        idx = 0;
+                    }
+                }
 
+            }
+            var amplitude = parseFloat(document.getElementById('amplitude').value);
+            const funcString = document.getElementById('Click_func').value;
+            var T = parseFloat(document.getElementById('T_click').value);
+            var tau = parseFloat(document.getElementById('tau').value);
+            var T_window = parseFloat(document.getElementById('T_window').value);
+            var click_sep = parseFloat(document.getElementById('click_sep').value);
+            var customFunction = new Function('T', 'tau', 'exp', 'cos', 'sin', 'PI', 't', `return ${funcString}`);
+            if (callType === 'Upsweep'){  // after selected time, keep decreasing the time between click pairs
+                const modStart = document.getElementById('modStart').value;
+                const modParm = document.getElementById('modParm').value;
+
+                with (Math) {
+                    var idx = 0;
+                    var k = 0;
+                    for (var j = 0; j < global_yAmpCall.length; j += floor(2 * click_sep)) {
+                        for (var i = 0; i < 2 * click_sep; i += 1) {
+                            global_tCall[k] = (k) / 1e6;   // time axis in seconds for full call
+                            global_yAmpCall[k] = amplitude * customFunction(T*2, tau, exp, cos, sin, PI, i);
+                            if (i > click_sep) {
+                                global_yAmpCall[k] = global_yAmpCall[k] + amplitude * customFunction(T*2, tau, exp, cos, sin, PI, floor(i - click_sep));
+                            }
+                            k += 1
+                        }
+                        console.log(j, k, click_sep);
+                        click_sep = click_sep * 0.999;
+                        if (click_sep < 100){
+                            break;
+                        }
+                    }
+                }
+            }
+            if (doSinAmpMod) { // apply sin envelope to the call
+                for (n = 0; n < global_yAmpCall.length; n += 1) {
+                    if ((n > 0.1 * global_yAmpCall.length) && (n < 0.9 * global_yAmpCall.length)) {
+                        var amp = Math.sin(Math.PI * (n - 0.1 * global_yAmpCall.length) / (2*lenCall));
+                        global_yAmpCall[n] *= amp+Math.random()/10;
+                    } else {
+                        global_yAmpCall[n] = Math.random()/10;
+                    }
+
+                }
+            }
+        }
+        function resampleCall(){
+            if (global_resampled & document.getElementById("low_pass").checked) {
+                var newSamples = waveResampler.resample(lowpassFunction(global_yAmpCall), 1e6, global_audioSamplerate);
+            } else {
+                var newSamples = waveResampler.resample(global_yAmpCall, 1e6, global_audioSamplerate);
+            }
+            global_resampled = true
+            window.global_callResampled = newSamples;
+            window.global_tCallResampled = new Array(global_callResampled.length).fill(0);
+            for (var i=0; i<global_callResampled.length; i += 1){
+                window.global_tCallResampled[i] = i/global_audioSamplerate
+            }
+        }
+
+
+        function plotClicks() {
             // Create a trace for the click function
             var trace1 = {
-                x: tmus,
-                y: yAmp,
+                x: global_tmus,
+                y: global_yAmp,
                 type: 'scatter'
             };
             var trace2 = {
-                x: tmus2,
-                y: yAmp2,
+                x: global_tmus2,
+                y: global_yAmp2,
                 xaxis: 'x2',
                 yaxis: 'y2',
                 type: 'scatter'
@@ -170,229 +304,90 @@
                 xaxis: {domain: [0, 0.3], title: "Time (microsec)"},
                 yaxis2: {anchor: 'x2'},
                 xaxis2: {domain: [0.33, 1], title: "Time (microsec)"}
-
             };
             data = [trace1, trace2];
             // Plot the click function using Plotly
             Plotly.newPlot('clickPlot', data, layout);
-
-            ////// Construct the full (maybe modulated) call time series at the high sample rate (1e6)  length = global_taudio
-            window.global_tCall = new Array(global_taudio * 1e6).fill(0);
-            window.global_yAmpCall = new Array(global_taudio * 1e6).fill(0);
-            var idx = 0;
-            for (var n = 0; n < global_yAmpCall.length; n += 1) {
-                global_tCall[n] = n / 1e6   // time axis in seconds for full call
-                global_yAmpCall[n] = yAmp2[idx];
-                idx += 1;
-                if (idx == yAmp2.length) {
-                    idx = 0;
-                }
-            }
-
-            // resample the call
-            resampleFunction();
-        };
-
-        // Event listener for the Replot button
-        document.getElementById('replot click').addEventListener('click', replotClickFunction);
-        replotClickFunction();
-
-        var msg      = document.getElementById('msg');
-        document.getElementById('resample').addEventListener('click', resampleFunction);
-
-        // Event listener for the Play Resampled Clicks button
-        document.getElementById('playResample').addEventListener('click', playResampledClicks);
-/////////////////////////////////////////////////////////////////////////
-        class SecondOrderLowPassFilter {
-          constructor(sampleRate, cutoffFrequency, Q) {
-            this.sampleRate = sampleRate;
-            this.cutoffFrequency = cutoffFrequency;
-            this.Q = Q;
-
-            this.xn1 = 0; // x[n-1]
-            this.xn2 = 0; // x[n-2]
-            this.yn1 = 0; // y[n-1]
-            this.yn2 = 0; // y[n-2]
-
-            // Calculate filter coefficients
-            let omega = 2 * Math.PI * this.cutoffFrequency / this.sampleRate;
-            let alpha = Math.sin(omega) / (2 * this.Q);
-            let cosOmega = Math.cos(omega);
-
-            this.b0 = (1 - cosOmega) / 2;
-            this.b1 = 1 - cosOmega;
-            this.b2 = (1 - cosOmega) / 2;
-            this.a0 = 1 + alpha;
-            this.a1 = -2 * cosOmega;
-            this.a2 = 1 - alpha;
-          }
-
-          filter(input) {
-            // Direct Form 1 implementation
-            let output = (this.b0 / this.a0) * input +
-                         (this.b1 / this.a0) * this.xn1 +
-                         (this.b2 / this.a0) * this.xn2 -
-                         (this.a1 / this.a0) * this.yn1 -
-                         (this.a2 / this.a0) * this.yn2;
-
-            // Update state variables
-            this.xn2 = this.xn1;
-            this.xn1 = input;
-            this.yn2 = this.yn1;
-            this.yn1 = output;
-
-            return output;
-          }
-        }
-        class ThirdOrderLowPassFilter {
-            constructor(sampleRate, cutoffFrequency, Q) {
-                this.sampleRate = sampleRate;
-                this.cutoffFrequency = cutoffFrequency;
-                this.Q = Q;
-
-                this.xn1 = 0; // x[n-1]
-                this.xn2 = 0; // x[n-2]
-                this.xn3 = 0; // x[n-3]
-                this.yn1 = 0; // y[n-1]
-                this.yn2 = 0; // y[n-2]
-                this.yn3 = 0; // y[n-3]
-
-                // Calculate filter coefficients
-                let omega = 2 * Math.PI * this.cutoffFrequency / this.sampleRate;
-                let alpha = Math.sin(omega) / (2 * this.Q);
-                let cosOmega = Math.cos(omega);
-
-                this.b0 = (1 - cosOmega) / 2;
-                this.b1 = 1 - cosOmega;
-                this.b2 = (1 - cosOmega) / 2;
-                this.b3 = 0;
-                this.a0 = 1 + alpha;
-                this.a1 = -2 * cosOmega;
-                this.a2 = 1 - alpha;
-                this.a3 = 0;
-            }
-
-            filter(input) {
-                // Direct Form 1 implementation
-                let output = (this.b0 / this.a0) * input +
-                             (this.b1 / this.a0) * this.xn1 +
-                             (this.b2 / this.a0) * this.xn2 +
-                             (this.b3 / this.a0) * this.xn3 -
-                             (this.a1 / this.a0) * this.yn1 -
-                             (this.a2 / this.a0) * this.yn2 -
-                             (this.a3 / this.a0) * this.yn3;
-
-                // Update state variables
-                this.xn3 = this.xn2;
-                this.xn2 = this.xn1;
-                this.xn1 = input;
-                this.yn3 = this.yn2;
-                this.yn2 = this.yn1;
-                this.yn1 = output;
-
-                return output;
-            }
         }
 
-        //////////////////////////////////////////////////////////////
-        function lowpassFunction(yampdata){  // low pass the full call data series
-            const cutoffFrequency = parseInt(document.getElementById('cutoff').value)
-            const sampleRate = 1e6
-            const Q = 0.707; // Quality factor (Butterworth)
-            const filter = new ThirdOrderLowPassFilter(sampleRate, cutoffFrequency, Q);
-
-            // Filter input signal
-            const inputSignal = yampdata;
-      //      const inputSignal = Array.from({length: 2000}, () => Math.random() * 10);
-            const outputSignal = [];
-            for (let i = 0; i < inputSignal.length; i++) {
-              outputSignal.push(filter.filter(inputSignal[i]));
-
+        function plotCall(){
+            var t1 = Math.floor(parseInt(document.getElementById('t1').value)*1e6/1000);
+            var t2 = Math.floor(parseInt(document.getElementById('t2').value)*1e6/1000);
+            console.log(t1, t2, parseInt(document.getElementById('t1').value),parseInt(document.getElementById('t2').value));
+            if (t2<=t1){
+                msg.innerHTML = "**************  t2 must be greater than t1 **********";
+                t2 = t1 + 100 * 1e6/1000 ;
+                document.getElementById('t2').value = Math.floor(t2/(1e6/1000));
             }
-            for (let i = 0; i < 2000; i+=10) {
-                console.log(i, inputSignal[i], outputSignal[i]);
-            }
-            return outputSignal;
-        }
-        function resampleFunction(){
-            const samplerate = parseInt(document.getElementById('Audio samplerate').value);
-            window.global_audioSamplerate = samplerate
-            if (global_resampled & document.getElementById("low_pass").checked) {
-                var newSamples = waveResampler.resample(lowpassFunction(global_yAmpCall), 1e6, samplerate);
-            } else {
-                var newSamples = waveResampler.resample(global_yAmpCall, 1e6, samplerate);
-            }
-            global_resampled = true
-            window.global_callResampled = newSamples;
-
-            plotResampledClicks();
-        }
-
-         // Event listener for the Plot Resampled Clicks button
-        // document.getElementById('plotResample').addEventListener('click', resampledClicksPlot);
-        // resampledClicksPlot();
-
-        function plotResampledClicks(){
-  //          msg.innerHTML = "ready to plot resampled clicks " + global_callResampled.length +"  " + global_audioSamplerate
-
-            const t1 = parseInt(document.getElementById('t1').value)
-            const t2 = parseInt(document.getElementById('t2').value)
             var tAxis = global_tCall.slice(t1, t2);
-            var yCall = global_callResampled.slice(t1, t2);
+            var yCall = global_yAmpCall.slice(t1, t2);
 
             var trace = {
                 x: tAxis,
                 y: yCall,
-                type: 'scatter'
+                type: 'scatter',
+                mode: 'markers', // Set mode to 'markers' to display markers
+                  marker: {
+                    size: 2, // Size of markers
+                    color: 'rgb(255, 0, 0)', // Color of markers
+                    symbol: 'circle', // Marker symbol ('circle', 'square', 'cross', etc.)
+                    // Other marker attributes can also be set here
+                  }
             };
             var layout = {
-                title: "Resampled Time Series",
+                title: "Amplitude vs Time for HF Call",
                 height: 300,
                 yaxis: {
                     title: 'Amplitude'
+                },
+                xaxis: {
+                    title: 'Seconds'
                 }
             };
             data = [trace]
             // Plot the resampled clicks using Plotly
-            Plotly.newPlot('resampledClicksPlot', data, layout);
+            Plotly.newPlot('CallPlot', data, layout);
+        }
 
-             Plot_Spectogram()
-        };
+        function plotResampledCall(){
+  //          msg.innerHTML = "ready to plot resampled clicks " + global_callResampled.length +"  " + global_audioSamplerate
+            const samplerate = parseInt(document.getElementById('Audio samplerate').value);
+            const t1 = Math.floor(parseInt(document.getElementById('t1').value)*samplerate/1000);
+            const t2 = Math.floor(parseInt(document.getElementById('t2').value)*samplerate/1000);
+            var tAxis = global_tCallResampled.slice(t1, t2);
+            var yCallResampled = global_callResampled.slice(t1, t2);
 
-        function playResampledClicks(){ // Function to play audio from the array
-            msg.innerHTML = "Play resampled click train"
+            var traceResampled = {
+                x: tAxis,
+                y: yCallResampled,
+                type: 'scatter',
+                mode: 'lines+markers', // Set mode to 'markers' to display markers
+                  marker: {
+                    size: 10, // Size of markers
+                    color: 'rgb(255, 0, 0)', // Color of markers
+                    symbol: 'circle', // Marker symbol ('circle', 'square', 'cross', etc.)
+                    // Other marker attributes can also be set here
+                  }
+            };
+            var layout = {
+                title: "Amplitude vs Time for Resampled Call",
+                height: 300,
+                yaxis: {
+                    title: 'Amplitude'
+                },
+                xaxis: {
+                    title: 'Seconds'
+                }
+            };
+            data = [traceResampled]
+            // Plot the resampled clicks using Plotly
+            Plotly.newPlot('resampledCallPlot', data, layout);
 
-            var audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        function plotSpectrogram() {
+              console.log("new call to plotSpectrogram");
 
-            // Create an empty AudioBuffer with 1 channel and desired length
-            var audioBuffer = audioContext.createBuffer(1, global_callResampled.length, global_audioSamplerate);
-
-            // Fill the AudioBuffer with data from ydata
-            var channelData = audioBuffer.getChannelData(0);
-            for (var i = 0; i < global_callResampled.length; i++) {
-                channelData[i] = global_callResampled[i];
-            }
-
-            // Create an AudioBufferSourceNode
-            var source = audioContext.createBufferSource();
-            source.buffer = audioBuffer;
-
-            // Connect the source to the destination (speakers)
-            source.connect(audioContext.destination);
-
-            // Start playing the audio
-            source.start();
-        };
-
-        function getMax(a){
-            return Math.max(...a.map(e => Array.isArray(e) ? getMax(e) : e));
-}
-
-        /////////////////////////////////////////////////////// Spectrogram code
-        function Plot_Spectogram() {
-  //            console.log("new call to Plot_Spectogram");
-
-              var full_x = new Array(global_resampled.length);
+              var full_x = new Array(global_callResampled.length);
               full_x = [...global_callResampled];  // this is a clone using "spread syntax"
 
 
@@ -549,10 +544,50 @@
                   "transpose": true
             };
             Plotly.restyle('spectrogram_plot', update, 0);
-          }
+        };
+        function playResampledClicks(){ // Function to play audio from the array
+            msg.innerHTML = "Play resampled call"
+
+            var audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            // Create an empty AudioBuffer with 1 channel and desired length
+            var audioBuffer = audioContext.createBuffer(1, global_callResampled.length, global_audioSamplerate);
+            // Fill the AudioBuffer with data from ydata
+            var channelData = audioBuffer.getChannelData(0);
+            for (var i = 0; i < global_callResampled.length; i++) {
+                channelData[i] = global_callResampled[i];
+            }
+            // Create an AudioBufferSourceNode
+            var source = audioContext.createBufferSource();
+            source.buffer = audioBuffer;
+            // Connect the source to the destination (speakers)
+            source.connect(audioContext.destination);
+            // Start playing the audio
+            source.start();
+            setTimeout(clear, 2000)
+        };
+        function clear(){
+            msg.innerHTML = ""
+        }
         function runDEBUG(){
             dbg = document.getElementById('DEBUG').value;
-            if (dbg = "squareWav"){
+            if (dbg == "squareWav") {
+                // setup a 1 Mhz square wave and run through low pass and resample etc.
+                period = 1000/2;  // microseconds
+                amp = parseFloat(document.getElementById('amplitude').value);
+                cnt = 0;
+                theAmp = amp;
+                for (i = 0; i < global_yAmpCall.length; i++) {
+                    global_yAmpCall[i] = theAmp;
+                    global_tCall[i] =  i / 1e6;   // time axis in seconds for full call
+                    cnt += 1;
+                    if (cnt === period) {
+                        theAmp = -theAmp;
+                        cnt = 0;
+                    }
+                }
+                runPipeline(2)
+            }
+            if (dbg == "sawtoothWav"){
                 // setup a 1 Mhz square wave and run through low pass and resample etc.
                 period = 1000;  // microseconds
                 amp = parseFloat(document.getElementById('amplitude').value);
@@ -560,16 +595,48 @@
                 theAmp = amp;
                 for (i=0; i<global_yAmpCall.length; i++){
                     global_yAmpCall[i] = theAmp * (cnt +1)/period;
+                    global_tCall[i] =  i / 1e6;   // time axis in seconds for full call
                     cnt += 1;
                     if (cnt === period){
                         theAmp = -theAmp;
                         cnt = 0;
                     }
                 }
-                 // resample the call
-                resampleFunction();
-
+                runPipeline(2)
             }
+            if (dbg == "orcaCall"){
+                // load wav file into global_callResampled and set global_audioSamplerate
+                const wavUrl = 'S199-L-4.wav'; // replace with your WAV file URL
+                readWavFile(wavUrl);
+                runPipeline(4);
+                const debug = document.getElementById('DEBUG');
+                debug.value = 'none';
+            }
+        }
+        // Function to fetch and read a WAV file
+        async function readWavFile(url) {
+          try {
+            const response = await fetch(url);
+            const buffer = await response.arrayBuffer();
+            const dataView = new DataView(buffer);
+            global_callResampled = [];
+            // Extract sample rate from WAV header
+            const headerSize = 44;
+            const sampleRateOffset = 24;
+            global_audioSamplerate = dataView.getUint32(sampleRateOffset, true);
+            // Skip WAV header (44 bytes)
+            for (let i = headerSize; i < dataView.byteLength; i += 2) {
+              const value = dataView.getInt16(i, true); // little-endian
+              global_callResampled.push(value);
+            }
+            window.global_tCallResampled = new Array(global_callResampled.length).fill(0);
+            for (i=0; i<global_callResampled.length; i+=1){
+                global_tCallResampled[i] = i;  // this is so can plot waveform
+            }
+
+          } catch (error) {
+            console.error('Error reading WAV file:', error);
+          }
         }
     </script>
 </body>
