@@ -256,7 +256,7 @@
             if (doSinAmpMod) { // apply sin envelope to the call
                 for (n = 0; n < global_yAmpCall.length; n += 1) {
                     if ((n > 0.1 * global_yAmpCall.length) && (n < 0.9 * global_yAmpCall.length)) {
-                        var amp = Math.sin(Math.PI * (n - 0.1 * global_yAmpCall.length) / (2*lenCall));
+                        var amp = Math.sin(Math.PI * (n - 0.1 * global_yAmpCall.length) / (lenCall/2));
                         global_yAmpCall[n] *= amp+Math.random()/10;
                     } else {
                         global_yAmpCall[n] = Math.random()/10;
