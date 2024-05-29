@@ -5,7 +5,9 @@ The overall plan is to synthesize 'click-like' signals at a high sampling rate (
 Then, lowpass filter and resample to our 'normal' orcasound sampling rate range (< 48 kilo samples per second))
 And, listen to the synthesized signal and observe the power spectral density and a spectrogram of the synthesized signal.
 
-This page is being served via Github Pages.  To run locally, clone the repository and then open a terminal window in your local directory and run a local server from there.
+This page is being served via Github Pagesat https://orcasound.github.io/click2callPlayground/
+
+To run locally, clone the repository and then open a terminal window in your local directory and run a local server from there.
 
 Under Ubuntu: python3 -m http.server --bind 127.0.0.1 9000
 
